@@ -18,25 +18,10 @@ class Memory:
     def getState(self, index):
         return self.buffer
 
-    def __getitem__(self, idx):
-        return self.buffer[(self.start + idx) % len(self.buffer)]
-
-    def __len__(self):
-        if self.end < self.start:
-            return self.end + len(self.buffer) - self.start
-        else:
-            return self.end - self.start
-
-    def __iter__(self):
-        for i in range(len(self)):
-            yield self[i]
-
     def __init__(self, memory_size):
         seed()
-        self.start = 0
-        self.end = 0
-        self.buffer = [None] * (memory_size + 1)
-
+        self.index = 0
+        self.buffer = deque(maxlen=memory_size)
 
     def addState(self, action, observation, reward, next_state):
         current_state = State(
@@ -45,17 +30,14 @@ class Memory:
             observation=observation,
             next=next_state)
 
-        self.buffer[self.end] = current_state
-        self.end = (self.end + 1) % len(self.buffer)
+        self.buffer.append(current_state)
+        self.index += 1
 
     def getRandomBatch(self, batch_size):
         random_states = sample(self.buffer, batch_size)
+        for i in range(batch_size):
+            self.buffer.popleft()
 
-
-
-    def storeSequence(self, ):
-        a,b,c,d = observation.tolist()
-        self.memory.append(HistoryTuple(a,b,c,d,result))
 
 
 class State:
@@ -89,8 +71,8 @@ model = keras.Model(inputs=inputs, outputs=output)
 model.compile(optimizer='adam',
         loss=keras.losses.binary_crossentropy)
 
-memory = Memory(50)
-seed(1)
+memory = Memory(30)
+
 for i_episode in range(100):
     observation = env.reset()
     done = False
